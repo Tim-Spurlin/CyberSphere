@@ -1,21 +1,10 @@
 # Dependencies
 node_modules/
-<<<<<<< copilot/fix-bfb63632-b3d8-413b-825b-372db5861a75
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-=======
 **/node_modules/
->>>>>>> main
 
 # Build outputs
 dist/
 build/
-<<<<<<< copilot/fix-bfb63632-b3d8-413b-825b-372db5861a75
-
-# Environment variables
-.env
-=======
 **/dist/
 **/build/
 
@@ -70,19 +59,11 @@ jspm_packages/
 .env
 .env.test
 .env.production
->>>>>>> main
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-<<<<<<< copilot/fix-bfb63632-b3d8-413b-825b-372db5861a75
-# Package manager lock files
-package-lock.json
-yarn.lock
-
-# IDE files
-=======
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
@@ -93,7 +74,6 @@ out
 
 # Nuxt.js build / generate output
 .nuxt
-dist
 
 # Gatsby files
 .cache/
@@ -128,7 +108,6 @@ public
 .pnp.*
 
 # IDE
->>>>>>> main
 .vscode/
 .idea/
 *.swp
@@ -141,9 +120,6 @@ public
 .Spotlight-V100
 .Trashes
 ehthumbs.db
-<<<<<<< copilot/fix-bfb63632-b3d8-413b-825b-372db5861a75
-Thumbs.db
-=======
 Thumbs.db
 
 # Temporary files
@@ -156,4 +132,3 @@ temp/
 _site/
 .sass-cache/
 .jekyll-metadata
->>>>>>> main
