@@ -573,7 +573,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Issues**: [GitHub Issues](https://github.com/Tim-Spurlin/CyberSphere/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/Tim-Spurlin/CyberSphere/discussions)
-- **Email**: [tim.spurlin@example.com](mailto:tim.spurlin@example.com)
+- **Email**: [tim.spurlin@saphyresolutions.com](mailto:tim.spurlin@saphyresolutions.com)
 
 ---
 
