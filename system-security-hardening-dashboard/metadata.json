@@ -1,0 +1,8 @@
+{
+  "name": "Copy of System Security Hardening Dashboard",
+  "description": "A web-based dashboard that simulates security scans for system hardening. It provides detailed explanations and remediation advice for potential vulnerabilities using AI.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
