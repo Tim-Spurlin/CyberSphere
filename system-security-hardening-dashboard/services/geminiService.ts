@@ -7,7 +7,17 @@ if (!API_KEY) {
   console.warn("API_KEY environment variable not set. Gemini features will be disabled.");
 }
 
-const ai = new GoogleGenAI({ apiKey: API_KEY! });
+let ai: GoogleGenAI | null = null;
+
+// Only initialize if API key is available
+if (API_KEY) {
+  try {
+    ai = new GoogleGenAI({ apiKey: API_KEY });
+  } catch (error) {
+    console.error("Failed to initialize Gemini AI:", error);
+  }
+}
+
 const textModel = 'gemini-2.5-flash';
 
 /**
@@ -17,7 +27,7 @@ const textModel = 'gemini-2.5-flash';
  * @returns A promise that resolves to a string containing the AI-generated advice.
  */
 export const getRemediationInfo = async (checkTitle: string, checkDescription: string): Promise<string> => {
-  if (!API_KEY) {
+  if (!API_KEY || !ai) {
     return Promise.resolve("AI features are disabled because the API key is not configured.");
   }
   
@@ -65,7 +75,7 @@ export const generateChatResponse = async (
     imageBase64?: string, 
     imageMimeType?: string
 ): Promise<string> => {
-    if (!API_KEY) {
+    if (!API_KEY || !ai) {
         return Promise.resolve("AI features are disabled. Please configure your API key.");
     }
 
