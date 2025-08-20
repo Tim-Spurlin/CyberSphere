@@ -3,60 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>System Security Hardening Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            colors: {
-              gray: {
-                950: '#0c0c0f',
-                900: '#121216',
-                800: '#1a1d21',
-                700: '#2e333a',
-                600: '#40464f',
-                500: '#6c737f',
-                400: '#9ea4af',
-                300: '#d1d5db',
-                200: '#e5e7eb',
-                100: '#f3f4f6',
-              },
-              purple: {
-                400: '#a78bfa',
-                500: '#8b5cf6',
-                600: '#7c3aed',
-                700: '#6d28d9',
-              }
-            }
-          }
-        }
-      }
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <style>
-      @keyframes move-stars {
-        from { background-position: 0 0; }
-        to { background-position: -10000px 5000px; }
-      }
-      .starfield {
-        background-image: url('data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJMYXllcl8xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIgd2lkdGg9IjEwMHB4IiBoZWlnaHQ9IjEwMHB4IiB2aWV3Qm94PSIwIDAgMTAwIDEwMCIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgMTAwIDEwMCIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+ICA8Y2lyY2xlIGZpbGw9IiNGRkYiIGN4PSI4Ni41ODMiIGN5PSI4NC40MTciIHI9IjEuNSIvPiAgPGNpcmNsZSBmaWxsPSIjRkZGIiBjeD0iNzQuNTgzIiBjeT0iOTMuNDE3IiByPSIxLjUiLz4gIDxjaXJjbGUgZmlsbD0iI0ZGRiIgY3g9IjYwLjU4MyIgY3k9IjY5LjQxNyIgcj0iMS41Ii8+ICA8Y2lyY2xlIGZpbGw9IiNGRkYiIGN4PSI0MS41ODMiIGN5PSI4Mi40MTciIHI9IjAuNSIvPiAgPGNpcmNsZSBmaWxsPSIjRkZGIiBjeD0iMjUuNTgzIiBjeT0iNzAuNDE3IiByPSIxLjUiLz4gIDxjaXJjbGUgZmlsbD0iI0ZGRiIgY3g9IjE2LjU4MyIgY3k9IiYjeDA5Ozg5LjQxNyIgcj0iMC41Ii8+ICA8Y2lyY2xlIGZpbGw9IiNGRkYiIGN4PSI1MS41ODMiIGN5PSI0OS40MTciIHI9IjAuNSIvPiAgPGNpcmNsZSBmaWxsPSIjRkZGIiBjeD0iMzYuNTgzIiBjeT0iNDIuNDE3IiByPSIxLjUiLz4gIDxjaXJjbGUgZmlsbD0iI0ZGRiIgY3g9IjkuNTgzIiBjeT0iNTUuNDE3IiByPSIxLjUiLz4gIDxjaXJjbGUgZmlsbD0iI0ZGRiIgY3g9IjE5LjU4MyIgY3k9IjI3LjQxNyIgcj0iMC41Ii8+ICA8Y2lyY2xlIGZpbGw9IiNGRkYiIGN4PSI4MS41ODMiIGN5PSIyMC40MTciIHI9IjEuNSIvPiAgPGNpcmNsZSBmaWxsPSIjRkZGIiBjeD0iODguNTgzIiBjeT0iMzYuNDE3IiByPSIwLjUiLz4gIDxjaXJjbGUgZmlsbD0iI0ZGRiIgY3g9IjkyLjU4MyIgY3k9IjUuNDE3IiByPSIxLjUiLz4gIDxjaXJjbGUgZmlsbD0iI0ZGRiIgY3g9IjU5LjU4MyIgY3k9IjExLjQxNyIgcj0iMS41Ii8+PC9zdmc+');
-        animation: move-stars 400s linear infinite;
-      }
-    </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@^19.1.1",
-    "react/": "https://esm.sh/react@^19.1.1/",
-    "react-dom/": "https://esm.sh/react-dom@^19.1.1/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.15.0"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
-</head>
+    <title>CyberSphere - Security Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <meta name="description" content="Interactive cybersecurity dashboard for security hardening and penetration testing">
+    <meta name="keywords" content="cybersecurity, penetration testing, security dashboard, hacking, cyber defense">
+  </head>
   <body class="bg-gray-950 text-gray-200 antialiased">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
