@@ -275,6 +275,72 @@ flowchart LR
 - **🎯 Risk Prioritization** - Focus on critical vulnerabilities first
 - **📚 Educational Content** - Learn while you secure
 
+## 🤖 Automated Code Review & Merge
+
+### GitHub Copilot Integration
+
+```mermaid
+flowchart TD
+    A[Pull Request Created] --> B[Auto-Review Triggered]
+    B --> C[Code Quality Analysis]
+    B --> D[Security Scanning]
+    B --> E[TypeScript Check]
+    C --> F{Quality Score ≥ 85?}
+    D --> G{Security Issues?}
+    E --> H{Type Errors?}
+    F --> I[Auto-Approve]
+    G --> J[Block/Review Required]
+    H --> K[Build Failed]
+    I --> L{Score ≥ 90 & auto-merge label?}
+    L --> M[Auto-Merge Enabled]
+    L --> N[Manual Merge Required]
+    
+    style A fill:#e1f5fe
+    style I fill:#e8f5e8
+    style M fill:#e8f5e8
+    style J fill:#ffebee
+    style K fill:#ffebee
+```
+
+### Automated Workflow Features
+
+- **🔍 Intelligent Code Review** - AI-powered analysis of code changes
+- **📊 Quality Scoring** - Automated assessment of code quality (0-100)
+- **🛡️ Security Scanning** - Vulnerability detection and blocking
+- **✅ Auto-Approval** - High-quality PRs get automatic approval
+- **🔀 Smart Auto-Merge** - Safe automatic merging with safeguards
+- **🏷️ Dynamic Labeling** - Automatic label application based on analysis
+- **🤖 Dependabot Integration** - Streamlined dependency updates
+
+### Auto-Merge Criteria
+
+#### Required Conditions (ALL must be met):
+- ✅ Code quality score ≥ 90/100
+- ✅ No security vulnerabilities detected
+- ✅ All CI checks passing
+- ✅ PR has `auto-merge` label
+- ✅ At least one approval (auto or manual)
+- ✅ No merge conflicts
+
+#### Quality Thresholds:
+- **🟢 Excellent (90-100)**: Auto-merge eligible
+- **🟡 Good (80-89)**: Auto-approve, manual merge
+- **🟠 Fair (60-79)**: Review required
+- **🔴 Poor (0-59)**: Blocked until fixed
+
+### Usage Instructions
+
+#### For Contributors:
+1. Create your PR as usual
+2. Wait for automated review (< 5 minutes)
+3. Address any issues highlighted by the AI
+4. Add `auto-merge` label for automatic merging (if score ≥ 90)
+
+#### For Maintainers:
+- Use `do-not-merge` label to prevent auto-merge
+- Manual review always overrides automation
+- Configure thresholds in `.github/auto-review-config.json`
+
 ## ⚔️ PvP Battle System
 
 ### Combat Mechanics
