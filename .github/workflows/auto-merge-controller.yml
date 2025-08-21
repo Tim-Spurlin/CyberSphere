@@ -21,60 +21,54 @@ jobs:
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
-        
+
       - name: 🔍 Get PR information
         id: pr-info
         uses: actions/github-script@v7
         with:
           script: |
             let prNumber;
-            
+
             if (context.eventName === 'workflow_run') {
-              // Get PR number from workflow_run event
               const pullRequests = await github.rest.pulls.list({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 state: 'open',
                 head: `${context.repo.owner}:${context.payload.workflow_run.head_branch}`
               });
-              
+
               if (pullRequests.data.length > 0) {
                 prNumber = pullRequests.data[0].number;
               }
             } else if (context.eventName === 'pull_request_review') {
               prNumber = context.payload.pull_request.number;
             }
-            
+
             if (!prNumber) {
               console.log('No PR found, skipping');
               return {};
             }
-            
-            // Get PR details
+
             const pr = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: prNumber
             });
-            
-            // Get PR reviews
+
             const reviews = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: prNumber
             });
-            
-            // Get PR labels
+
             const labels = pr.data.labels.map(label => label.name);
-            
-            // Check if auto-merge conditions are met
             const hasAutoMergeLabel = labels.includes('auto-merge') || labels.includes('dependencies');
             const isApproved = reviews.data.some(review => review.state === 'APPROVED');
-            const hasBlockingLabel = labels.some(label => 
+            const hasBlockingLabel = labels.some(label =>
               ['do-not-merge', 'wip', 'needs-work'].includes(label)
             );
             const isDraft = pr.data.draft;
-            
+
             return {
               prNumber: prNumber,
               hasAutoMergeLabel: hasAutoMergeLabel,
@@ -85,7 +79,7 @@ jobs:
               title: pr.data.title,
               author: pr.data.user.login
             };
-            
+
       - name: 🔍 Check status checks
         id: status-checks
         if: steps.pr-info.outputs.prNumber
@@ -93,28 +87,25 @@ jobs:
         with:
           script: |
             const prNumber = '${{ steps.pr-info.outputs.prNumber }}';
-            
+
             if (!prNumber) {
               return { allChecksPassed: false };
             }
-            
-            // Get the latest commit
+
             const pr = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: parseInt(prNumber)
             });
-            
+
             const headSha = pr.data.head.sha;
-            
-            // Get status checks
+
             const statusChecks = await github.rest.checks.listForRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
               ref: headSha
             });
 
-            // Get commit status
             const commitStatus = await github.rest.repos.getCombinedStatusForRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -127,8 +118,9 @@ jobs:
                 check.conclusion === 'success' || check.conclusion === null
               )
             );
+
             return { allChecksPassed: allChecksPassed };
-            
+
       - name: 🚀 Execute auto-merge
         if: |
           steps.pr-info.outputs.prNumber &&
@@ -143,7 +135,6 @@ jobs:
             const prNumber = parseInt('${{ steps.pr-info.outputs.prNumber }}');
 
             try {
-              // Enable auto-merge
               await github.rest.pulls.enableAutoMerge({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -151,7 +142,6 @@ jobs:
                 merge_method: 'squash'
               });
 
-              // Add success comment
               const successMessage = '🚀 **Auto-merge enabled successfully!**\n\n' +
                 '✅ All conditions met:\n- Auto-merge label present\n' +
                 '- At least one approval\n- All status checks passing\n' +
@@ -169,7 +159,6 @@ jobs:
             } catch (error) {
               console.error(`Failed to enable auto-merge for PR #${prNumber}:`, error);
 
-              // Comment about the failure
               const failureMessage = '⚠️ **Auto-merge failed**\n\n' +
                 'Could not enable auto-merge for this PR. Please check:\n' +
                 '- Branch protection rules\n- Required status checks\n' +

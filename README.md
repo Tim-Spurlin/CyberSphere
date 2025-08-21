@@ -341,6 +341,17 @@ flowchart TD
 - Manual review always overrides automation
 - Configure thresholds in `.github/auto-review-config.json`
 
+### 🎭 Try the Demo
+```bash
+# See the auto-review system in action
+./demo-auto-review.sh
+```
+
+### 📚 Learn More
+- [📖 Complete Usage Guide](.github/AUTO_REVIEW_GUIDE.md)
+- [⚙️ Configuration Options](.github/AUTO_REVIEW_CONFIG.md)
+- [🧪 Test the System](./test-auto-review.sh)
+
 ## ⚔️ PvP Battle System
 
 ### Combat Mechanics
