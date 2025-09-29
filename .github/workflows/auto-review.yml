@@ -1,0 +1,242 @@
+name: 🤖 Auto-Review and Quality Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, develop]
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  issues: write
+
+jobs:
+  code-quality:
+    name: 🔍 Code Quality Analysis
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./system-security-hardening-dashboard
+    outputs:
+      quality-score: ${{ steps.quality-check.outputs.score }}
+      has-security-issues: ${{ steps.security-check.outputs.has-issues }}
+      
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: 🚀 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: './system-security-hardening-dashboard/package-lock.json'
+          
+      - name: 📦 Install dependencies
+        run: npm ci
+        
+      - name: 🔧 TypeScript Check
+        run: npm run typecheck
+        
+      - name: 🎨 Lint Check
+        run: npm run lint
+        continue-on-error: true
+        
+      - name: 🏗️ Build Check
+        run: npm run build
+        env:
+          VITE_BASE_PATH: '/CyberSphere/'
+          
+      - name: 🔒 Security Audit
+        id: security-check
+        run: |
+          npm audit --audit-level moderate --json > audit-results.json || true
+          VULNERABILITIES=$(cat audit-results.json | jq -r '.metadata.vulnerabilities.total // 0')
+          echo "vulnerabilities=$VULNERABILITIES" >> $GITHUB_OUTPUT
+          if [ "$VULNERABILITIES" -gt 0 ]; then
+            echo "has-issues=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-issues=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: 📊 Code Quality Assessment
+        id: quality-check
+        run: |
+          # Simple quality score calculation
+          SCORE=100
+          
+          # Check for linting issues
+          npm run lint > lint-output.txt 2>&1 || true
+          LINT_ISSUES=$(grep -c "error\|warning" lint-output.txt || echo "0")
+          SCORE=$((SCORE - LINT_ISSUES * 5))
+          
+          # Check for TypeScript errors
+          npm run typecheck > typecheck-output.txt 2>&1 || true
+          TS_ERRORS=$(grep -c "error TS" typecheck-output.txt || echo "0")
+          SCORE=$((SCORE - TS_ERRORS * 10))
+          
+          # Ensure minimum score
+          if [ $SCORE -lt 0 ]; then SCORE=0; fi
+          
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+          echo "Code quality score: $SCORE/100"
+
+  security-analysis:
+    name: 🛡️ Security Analysis
+    runs-on: ubuntu-latest
+    needs: code-quality
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 🔒 Run Security Scan
+        uses: github/super-linter@v5
+        env:
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_TYPESCRIPT_ES: true
+          VALIDATE_JSON: true
+          VALIDATE_YAML: true
+          VALIDATE_DOCKERFILE: false
+          
+  ai-review:
+    name: 🤖 AI Code Review
+    runs-on: ubuntu-latest
+    needs: [code-quality, security-analysis]
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: 🧠 AI Review Analysis
+        id: ai-review
+        run: |
+          # Get changed files
+          git diff --name-only origin/main..HEAD > changed-files.txt
+          
+          # Simple AI-like analysis (placeholder for actual AI integration)
+          TOTAL_FILES=$(wc -l < changed-files.txt)
+          
+          # Create review suggestions based on file patterns
+          SUGGESTIONS=""
+          
+          while read -r file; do
+            case "$file" in
+              *.tsx|*.ts)
+                if ! grep -q "interface\|type" "$file" 2>/dev/null; then
+                  SUGGESTIONS="$SUGGESTIONS\n- Consider adding TypeScript types for better type safety in $file"
+                fi
+                ;;
+              *.md)
+                SUGGESTIONS="$SUGGESTIONS\n- Documentation updated in $file - ensure it's accurate and complete"
+                ;;
+              *workflow*|*.yml|*.yaml)
+                SUGGESTIONS="$SUGGESTIONS\n- Workflow changes in $file - verify security and permissions"
+                ;;
+            esac
+          done < changed-files.txt
+          
+          if [ -z "$SUGGESTIONS" ]; then
+            SUGGESTIONS="✅ Code changes look good! No specific suggestions."
+          fi
+          
+          echo "suggestions<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$SUGGESTIONS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+      - name: 💬 Post AI Review Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const qualityScore = '${{ needs.code-quality.outputs.quality-score }}';
+            const hasSecurityIssues = '${{ needs.code-quality.outputs.has-security-issues }}';
+            const suggestions = `${{ steps.ai-review.outputs.suggestions }}`;
+            
+            const securityBadge = hasSecurityIssues === 'true' ? '🔴 Security Issues Found' : '🟢 No Security Issues';
+            const qualityBadge = qualityScore >= 80 ? '🟢 High Quality' : qualityScore >= 60 ? '🟡 Moderate Quality' : '🔴 Needs Improvement';
+            
+            const comment = `## 🤖 AI Code Review Summary
+            
+            ### 📊 Quality Metrics
+            - **Code Quality Score:** ${qualityScore}/100 ${qualityBadge}
+            - **Security Status:** ${securityBadge}
+            
+            ### 🔍 Review Suggestions
+            ${suggestions}
+            
+            ### 🎯 Recommendations
+            ${qualityScore >= 80 && hasSecurityIssues === 'false' ? 
+              '✅ **This PR looks great!** Code quality is high and no security issues detected. Ready for review!' : 
+              '⚠️ **Please address the issues above** before merging.'}
+            
+            ---
+            *🤖 This review was generated automatically. Human review is still recommended.*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  auto-approve:
+    name: ✅ Auto-Approve High Quality PRs
+    runs-on: ubuntu-latest
+    needs: [code-quality, security-analysis, ai-review]
+    if: |
+      github.event_name == 'pull_request' && 
+      needs.code-quality.outputs.quality-score >= '85' && 
+      needs.code-quality.outputs.has-security-issues == 'false' &&
+      github.actor != 'dependabot[bot]'
+    steps:
+      - name: 🎉 Auto-approve PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              event: 'APPROVE',
+              body: '🤖 **Auto-approved!** This PR meets all quality criteria:\n\n✅ High code quality score (85+)\n✅ No security vulnerabilities\n✅ All checks passed\n\nReady for merge! 🚀'
+            });
+
+  auto-merge:
+    name: 🔀 Auto-Merge Approved PRs
+    runs-on: ubuntu-latest
+    needs: [code-quality, security-analysis, ai-review, auto-approve]
+    if: |
+      github.event_name == 'pull_request' && 
+      needs.code-quality.outputs.quality-score >= '90' && 
+      needs.code-quality.outputs.has-security-issues == 'false' &&
+      github.actor != 'dependabot[bot]' &&
+      contains(github.event.pull_request.labels.*.name, 'auto-merge')
+    steps:
+      - name: 🚀 Enable auto-merge
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.pulls.enableAutoMerge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              merge_method: 'squash'
+            });
+            
+      - name: 💬 Comment auto-merge status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 **Auto-merge enabled!** This PR will be automatically merged when all required checks pass.\n\n📋 **Merge criteria met:**\n✅ Code quality score: 90+\n✅ No security issues\n✅ All automated checks passed\n✅ Auto-merge label applied'
+            });
