@@ -10,7 +10,7 @@
                                                     
 ```
 
-> Social media app that lets you hack or defend, build attack and counter simulations and have duels in the area. Make the leader board and fine-tune your skills in the Attack Lab.
+> Social media app that lets you hack or defend, build attack and counter simulations and have duels in the arena. Make the leader board and fine-tune your skills in the Attack Lab.
 
 **CyberSphere** is an interactive, gamified web application that puts you in the driver's seat of modern cybersecurity warfare. Choose your side as an elite Hacker or a steadfast Cyber Security expert. Sharpen your skills by running simulated attacks on your own system, then enter the PVP Arena to challenge other players in real-time tactical duels. Climb the leaderboard, customize your profile, and prepare for a future of augmented reality cyber battles.
 
