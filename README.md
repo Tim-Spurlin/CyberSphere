@@ -44,7 +44,7 @@ This is a frontend-only application that can be run directly in the browser.
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-username/cybersphere.git
+    git clone https://github.com/<your-github-username>/cybersphere.git
     cd cybersphere
     ```
 
