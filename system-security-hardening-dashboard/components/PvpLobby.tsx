@@ -72,7 +72,7 @@ const PvpLobby: React.FC<PvpLobbyProps> = ({ userProfile }) => {
         }
         return null; // Should not happen
 
-      case PvpGameStage.RESULTS:
+      case PvpGameStage.RESULTS: {
         const winner = match?.winner;
         const isVictor = winner === userProfile.username;
         return (
@@ -90,7 +90,8 @@ const PvpLobby: React.FC<PvpLobbyProps> = ({ userProfile }) => {
                     Return to Arena Lobby
                 </button>
             </div>
-        )
+        );
+      }
 
       case PvpGameStage.LOBBY:
       default:
