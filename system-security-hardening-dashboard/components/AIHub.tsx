@@ -4,12 +4,21 @@ import { ChatMessageAuthor, ChatMessageType } from '../types';
 import { useVoiceRecorder } from '../hooks/useVoiceRecorder';
 import { generateChatResponse } from '../services/geminiService';
 import { SparklesIcon, MicrophoneIcon, PaperClipIcon, StopIcon, PaperAirplaneIcon, SpinnerIcon, PhotoIcon, SpeakerWaveIcon, XMarkIcon } from './icons';
+import mermaid from 'mermaid';
 
-declare global {
-    interface Window {
-        mermaid: any;
+// Initialize mermaid
+mermaid.initialize({ 
+    startOnLoad: false,
+    theme: 'dark',
+    themeVariables: {
+        primaryColor: '#8b5cf6',
+        primaryTextColor: '#ffffff',
+        primaryBorderColor: '#6b46c1',
+        lineColor: '#a855f7',
+        secondaryColor: '#1f2937',
+        tertiaryColor: '#374151'
     }
-}
+});
 
 // Utility to convert file to base64
 const fileToBase64 = (file: File): Promise<string> => {
@@ -35,7 +44,7 @@ const MermaidRenderer: React.FC<{ code: string }> = ({ code }) => {
     useEffect(() => {
         if (ref.current) {
             ref.current.innerHTML = code;
-            window.mermaid.run({ nodes: [ref.current] });
+            mermaid.run({ nodes: [ref.current] });
         }
     }, [code]);
     return <div ref={ref} className="mermaid">{code}</div>;
@@ -53,19 +62,6 @@ const AIHub: React.FC = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const chatEndRef = useRef<HTMLDivElement>(null);
     
-    useEffect(() => {
-        window.mermaid.initialize({ startOnLoad: false, theme: 'dark', darkMode: true,  
-            themeVariables: {
-            background: '#121216',
-            primaryColor: '#1a1d21',
-            primaryTextColor: '#f3f4f6',
-            lineColor: '#6d28d9',
-            secondaryColor: '#40464f',
-            tertiaryColor: '#2e333a',
-          }
-        });
-    }, []);
-
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
