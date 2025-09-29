@@ -1,0 +1,120 @@
+{
+  "qualityThresholds": {
+    "autoApprove": 85,
+    "autoMerge": 90,
+    "blockMerge": 60,
+    "excellent": 90,
+    "good": 80,
+    "fair": 60
+  },
+  "securitySettings": {
+    "auditLevel": "moderate",
+    "blockOnVulnerabilities": true,
+    "enableSecretScanning": true,
+    "requireSecurityReview": false
+  },
+  "reviewSettings": {
+    "enableAutoReview": true,
+    "enableAutoMerge": true,
+    "requireHumanReview": false,
+    "autoComments": true,
+    "detailedFeedback": true
+  },
+  "scoringWeights": {
+    "typescriptError": -10,
+    "eslintError": -10,
+    "eslintWarning": -5,
+    "securityVulnerability": -20,
+    "missingTests": -15,
+    "codeComplexity": -5,
+    "documentationGap": -5
+  },
+  "mergeSettings": {
+    "mergeMethod": "squash",
+    "deleteBranchOnMerge": true,
+    "requireUpToDate": true,
+    "enableAutoMergeLabels": ["auto-merge", "dependencies"],
+    "blockMergeLabels": ["do-not-merge", "wip", "needs-work"]
+  },
+  "notifications": {
+    "onAutoApprove": true,
+    "onAutoMerge": true,
+    "onQualityIssues": true,
+    "onSecurityIssues": true,
+    "onBlockedMerge": true
+  },
+  "excludePatterns": [
+    "*.log",
+    "*.tmp",
+    "node_modules/**",
+    "dist/**",
+    "build/**",
+    ".git/**",
+    "*.lock"
+  ],
+  "includePatterns": [
+    "*.ts",
+    "*.tsx",
+    "*.js",
+    "*.jsx",
+    "*.json",
+    "*.yml",
+    "*.yaml",
+    "*.md",
+    ".github/workflows/**"
+  ],
+  "branchSettings": {
+    "protectedBranches": ["main", "develop", "release/*"],
+    "requireReviewOnProtected": true,
+    "allowForceOnProtected": false
+  },
+  "integrations": {
+    "eslint": {
+      "enabled": true,
+      "configPath": ".eslintrc.json",
+      "maxWarnings": 0
+    },
+    "typescript": {
+      "enabled": true,
+      "strict": true,
+      "configPath": "tsconfig.json"
+    },
+    "security": {
+      "npmAudit": true,
+      "superLinter": true,
+      "secretScanning": true
+    }
+  },
+  "labels": {
+    "autoApplied": [
+      "auto-reviewed",
+      "quality-checked",
+      "security-scanned"
+    ],
+    "qualityBased": {
+      "excellent": "high-quality",
+      "good": "good-quality",
+      "needsWork": "needs-improvement"
+    },
+    "statusBased": {
+      "approved": "auto-approved",
+      "merged": "auto-merged",
+      "blocked": "merge-blocked"
+    }
+  },
+  "workflow": {
+    "timeouts": {
+      "reviewTimeout": 300,
+      "buildTimeout": 600,
+      "securityScanTimeout": 900
+    },
+    "retries": {
+      "maxRetries": 3,
+      "retryDelay": 30
+    },
+    "parallelism": {
+      "enableParallelJobs": true,
+      "maxConcurrentJobs": 3
+    }
+  }
+}
