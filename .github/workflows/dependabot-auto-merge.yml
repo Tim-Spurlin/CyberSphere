@@ -1,0 +1,119 @@
+name: 🤖 Dependabot Auto-Merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+jobs:
+  dependabot-auto-merge:
+    name: 🔄 Auto-merge Dependabot PRs
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 🔍 Fetch Dependabot metadata
+        id: dependabot-metadata
+        uses: dependabot/fetch-metadata@v1
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          
+      - name: 🚀 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: './system-security-hardening-dashboard/package-lock.json'
+          
+      - name: 📦 Install dependencies and run checks
+        working-directory: ./system-security-hardening-dashboard
+        run: |
+          npm ci
+          npm run typecheck
+          npm run build
+        env:
+          VITE_BASE_PATH: '/CyberSphere/'
+          
+      - name: 🔒 Security audit
+        working-directory: ./system-security-hardening-dashboard
+        run: |
+          npm audit --audit-level high --json > audit-results.json || true
+          CRITICAL_VULNS=$(cat audit-results.json | jq -r '.metadata.vulnerabilities.critical // 0')
+          HIGH_VULNS=$(cat audit-results.json | jq -r '.metadata.vulnerabilities.high // 0')
+          
+          if [ "$CRITICAL_VULNS" -gt 0 ] || [ "$HIGH_VULNS" -gt 0 ]; then
+            echo "High/Critical vulnerabilities found. Blocking auto-merge."
+            exit 1
+          fi
+          
+      - name: ✅ Auto-approve dependabot PR
+        if: |
+          steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.dependabot-metadata.outputs.update-type == 'version-update:semver-minor'
+        run: |
+          gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          
+      - name: 🔀 Enable auto-merge for dependabot
+        if: |
+          steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch' ||
+          (steps.dependabot-metadata.outputs.update-type == 'version-update:semver-minor' && 
+           steps.dependabot-metadata.outputs.dependency-type == 'direct:development')
+        run: |
+          gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          
+      - name: 🏷️ Add auto-merge label
+        if: |
+          steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.dependabot-metadata.outputs.update-type == 'version-update:semver-minor'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['dependencies', 'auto-merge']
+            });
+            
+      - name: 💬 Comment on dependabot PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const updateType = '${{ steps.dependabot-metadata.outputs.update-type }}';
+            const dependencyName = '${{ steps.dependabot-metadata.outputs.dependency-names }}';
+            
+            let message = `🤖 **Dependabot Auto-Review Summary**\n\n`;
+            message += `📦 **Dependency:** ${dependencyName}\n`;
+            message += `🔄 **Update Type:** ${updateType}\n\n`;
+            
+            if (updateType.includes('patch') || updateType.includes('minor')) {
+              message += `✅ **Auto-approved and enabled for auto-merge**\n\n`;
+              message += `This dependency update appears safe based on:\n`;
+              message += `- ✅ Patch/minor version update\n`;
+              message += `- ✅ Build and type checks passed\n`;
+              message += `- ✅ No high/critical security vulnerabilities\n\n`;
+              message += `The PR will be automatically merged when all checks pass.`;
+            } else {
+              message += `⚠️ **Manual review required**\n\n`;
+              message += `This is a major version update that requires human review.`;
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });

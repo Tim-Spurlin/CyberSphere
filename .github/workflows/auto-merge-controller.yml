@@ -1,0 +1,206 @@
+name: 🎯 Auto-Merge Controller
+
+on:
+  workflow_run:
+    workflows: ["🤖 Auto-Review and Quality Check"]
+    types: [completed]
+    branches: [main]
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+jobs:
+  auto-merge-decision:
+    name: 🔀 Auto-Merge Decision
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'pull_request_review'
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Get PR information
+        id: pr-info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let prNumber;
+
+            if (context.eventName === 'workflow_run') {
+              const pullRequests = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: `${context.repo.owner}:${context.payload.workflow_run.head_branch}`
+              });
+
+              if (pullRequests.data.length > 0) {
+                prNumber = pullRequests.data[0].number;
+              }
+            } else if (context.eventName === 'pull_request_review') {
+              prNumber = context.payload.pull_request.number;
+            }
+
+            if (!prNumber) {
+              console.log('No PR found, skipping');
+              return {};
+            }
+
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+
+            const reviews = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+
+            const labels = pr.data.labels.map(label => label.name);
+            const hasAutoMergeLabel = labels.includes('auto-merge') || labels.includes('dependencies');
+            const isApproved = reviews.data.some(review => review.state === 'APPROVED');
+            const hasBlockingLabel = labels.some(label =>
+              ['do-not-merge', 'wip', 'needs-work'].includes(label)
+            );
+            const isDraft = pr.data.draft;
+
+            return {
+              prNumber: prNumber,
+              hasAutoMergeLabel: hasAutoMergeLabel,
+              isApproved: isApproved,
+              hasBlockingLabel: hasBlockingLabel,
+              isDraft: isDraft,
+              labels: labels,
+              title: pr.data.title,
+              author: pr.data.user.login
+            };
+
+      - name: 🔍 Check status checks
+        id: status-checks
+        if: steps.pr-info.outputs.prNumber
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = '${{ steps.pr-info.outputs.prNumber }}';
+
+            if (!prNumber) {
+              return { allChecksPassed: false };
+            }
+
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: parseInt(prNumber)
+            });
+
+            const headSha = pr.data.head.sha;
+
+            const statusChecks = await github.rest.checks.listForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: headSha
+            });
+
+            const commitStatus = await github.rest.repos.getCombinedStatusForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: headSha
+            });
+
+            const allChecksPassed = (
+              commitStatus.data.state === 'success' &&
+              statusChecks.data.check_runs.every(check =>
+                check.conclusion === 'success' || check.conclusion === null
+              )
+            );
+
+            return { allChecksPassed: allChecksPassed };
+
+      - name: 🚀 Execute auto-merge
+        if: |
+          steps.pr-info.outputs.prNumber &&
+          steps.pr-info.outputs.hasAutoMergeLabel == 'true' &&
+          steps.pr-info.outputs.isApproved == 'true' &&
+          steps.pr-info.outputs.hasBlockingLabel != 'true' &&
+          steps.pr-info.outputs.isDraft != 'true' &&
+          steps.status-checks.outputs.allChecksPassed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = parseInt('${{ steps.pr-info.outputs.prNumber }}');
+
+            try {
+              await github.rest.pulls.enableAutoMerge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                merge_method: 'squash'
+              });
+
+              const successMessage = '🚀 **Auto-merge enabled successfully!**\n\n' +
+                '✅ All conditions met:\n- Auto-merge label present\n' +
+                '- At least one approval\n- All status checks passing\n' +
+                '- No blocking labels\n- Not a draft PR\n\n' +
+                'This PR will be merged automatically.';
+
+              await github.rest.issues.createComment({
+                issue_number: prNumber,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: successMessage
+              });
+
+              console.log(`Auto-merge enabled for PR #${prNumber}`);
+            } catch (error) {
+              console.error(`Failed to enable auto-merge for PR #${prNumber}:`, error);
+
+              const failureMessage = '⚠️ **Auto-merge failed**\n\n' +
+                'Could not enable auto-merge for this PR. Please check:\n' +
+                '- Branch protection rules\n- Required status checks\n' +
+                '- Merge conflicts\n\nManual merge may be required.';
+
+              await github.rest.issues.createComment({
+                issue_number: prNumber,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: failureMessage
+              });
+            }
+
+      - name: 📝 Log auto-merge decision
+        if: steps.pr-info.outputs.prNumber
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = '${{ steps.pr-info.outputs.prNumber }}';
+            const hasAutoMergeLabel = '${{ steps.pr-info.outputs.hasAutoMergeLabel }}';
+            const isApproved = '${{ steps.pr-info.outputs.isApproved }}';
+            const hasBlockingLabel = '${{ steps.pr-info.outputs.hasBlockingLabel }}';
+            const isDraft = '${{ steps.pr-info.outputs.isDraft }}';
+            const allChecksPassed = '${{ steps.status-checks.outputs.allChecksPassed }}';
+
+            console.log('Auto-merge decision for PR #' + prNumber + ':');
+            console.log('- Has auto-merge label:', hasAutoMergeLabel);
+            console.log('- Is approved:', isApproved);
+            console.log('- Has blocking label:', hasBlockingLabel);
+            console.log('- Is draft:', isDraft);
+            console.log('- All checks passed:', allChecksPassed);
+
+            if (hasAutoMergeLabel !== 'true') {
+              console.log('❌ Auto-merge blocked: Missing auto-merge label');
+            } else if (isApproved !== 'true') {
+              console.log('❌ Auto-merge blocked: No approvals');
+            } else if (hasBlockingLabel === 'true') {
+              console.log('❌ Auto-merge blocked: Has blocking label');
+            } else if (isDraft === 'true') {
+              console.log('❌ Auto-merge blocked: Is draft PR');
+            } else if (allChecksPassed !== 'true') {
+              console.log('❌ Auto-merge blocked: Status checks failing');
+            } else {
+              console.log('✅ Auto-merge conditions met');
+            }
